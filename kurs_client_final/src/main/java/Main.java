@@ -1,4 +1,3 @@
-import org.json.JSONObject;
 import java.io.*;
 import java.math.BigDecimal;
 import java.net.*;
@@ -10,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class Main
 {
-    private static String token;
+    private static String token = "";
 
     public static void doRequest(String path, Boolean isPost, Boolean isSignIn, String data) throws IOException {
         URL url = new URL(path);
@@ -46,13 +45,17 @@ public class Main
             System.out.println(response.get());
             if (isSignIn)
             {
-                JSONObject object = new JSONObject(response.get());
-                token = object.getString("token");
+                String stringResponse = response.get();
+                int index = stringResponse.indexOf("\"token\":\"") + 9;
+                while (index < stringResponse.length() - 2)
+                {
+                    token += stringResponse.charAt(index);
+                    ++index;
+                }
+                System.out.println(token);
             }
         }
     }
-
-
 
     public static void main(String[] args)
     {
@@ -61,12 +64,49 @@ public class Main
         {
             try
             {
-                System.out.println("Command: ");
+                System.out.println("Command (print help to find commands): ");
                 Scanner in = new Scanner(System.in);
                 req = in.nextLine();
                 String path = "http://localhost:8080/" + req;
-                switch (req) {
-                    case "auth/signin" -> {
+                switch (req)
+                {
+                    case "help" -> System.out.println("""
+                            auth/signin
+                            articles/show
+                            balance/show
+                            balance/show/amount/ascending
+                            balance/show/amount/descending
+                            balance/show/date/ascending
+                            balance/show/date/descending
+                            operations/show
+                            operations/show/date/ascending
+                            operations/show/date/descending
+                            operations/show/balance/amount/ascending
+                            operations/show/balance/amount/descending
+                            operations/show/balance/date/ascending
+                            operations/show/balance/date/descending
+                            articles/show/id
+                            balance/show/id
+                            operations/show/id
+                            operations/show/balance-id
+                            operations/show/article-id
+                            articles/show/name
+                            balance/show/amount
+                            operations/show/balance/amount
+                            articles/add
+                            balance/add
+                            operations/add
+                            articles/change
+                            operations/change/debit
+                            operations/change/credit
+                            articles/remove
+                            balance/remove
+                            operations/remove/id
+                            operations/remove/article-id
+                            operations/remove/balance-id
+                            exit""");
+                    case "auth/signin" ->
+                    {
                         System.out.println("Name: ");
                         String name = in.nextLine();
                         System.out.println("Password: ");
@@ -77,28 +117,33 @@ public class Main
                             "balance/show/date/descending", "operations/show", "operations/show/date/ascending", "operations/show/date/descending",
                             "operations/show/balance/amount/ascending", "operations/show/balance/amount/descending", "operations/show/balance/date/ascending",
                             "operations/show/balance/date/descending" -> doRequest(path, false, false, "");
-                    case "articles/show/id", "balance/show/id", "operations/show/id", "operations/show/balance-id", "operations/show/article-id" -> {
+                    case "articles/show/id", "balance/show/id", "operations/show/id", "operations/show/balance-id", "operations/show/article-id" ->
+                    {
                         System.out.println("Id: ");
                         int id = in.nextInt();
                         doRequest(path + "/" + id, false, false, "");
                     }
-                    case "articles/show/name" -> {
+                    case "articles/show/name" ->
+                    {
                         System.out.println("Name: ");
                         String name = in.nextLine();
                         doRequest(path + "/" + name, false, false, "");
                     }
-                    case "balance/show/amount", "operations/show/balance/amount" -> {
+                    case "balance/show/amount", "operations/show/balance/amount" ->
+                    {
                         System.out.println("Amount: ");
                         BigDecimal amount = in.nextBigDecimal();
                         doRequest(path + "/" + amount, false, false, "");
                     }
-                    case "articles/add" -> {
+                    case "articles/add" ->
+                    {
                         System.out.println("Article name: ");
                         String name = in.nextLine();
                         doRequest(path, true, false, "{\"name\": \"" + name + "\"}");
                     }
                     case "balance/add" -> doRequest(path, true, false, "");
-                    case "operations/add" -> {
+                    case "operations/add" ->
+                    {
                         System.out.println("Article id: ");
                         int articleId = in.nextInt();
                         System.out.println("Debit: ");
@@ -110,34 +155,37 @@ public class Main
                         doRequest(path, true, false, "{\"articleId\": \"" + articleId + "\", \"debit\": \"" + debit + "\", \"credit\": \""
                                 + credit + "\", \"balanceId\": \"" + balanceId + "\"}");
                     }
-                    case "articles/change" -> {
+                    case "articles/change" ->
+                    {
                         System.out.println("Name: ");
                         String name = in.nextLine();
                         System.out.println("Id: ");
                         int id = in.nextInt();
                         doRequest(path + "/" + id + "?name=" + name, true, false, "");
                     }
-                    case "operations/change/debit" -> {
+                    case "operations/change/debit" ->
+                    {
                         System.out.println("Id: ");
                         int id = in.nextInt();
                         System.out.println("Debit: ");
                         BigDecimal debit = in.nextBigDecimal();
                         doRequest(path + "/" + id + "?debit=" + debit, true, false, "");
                     }
-                    case "operations/change/credit" -> {
+                    case "operations/change/credit" ->
+                    {
                         System.out.println("Id: ");
                         int id = in.nextInt();
                         System.out.println("Credit: ");
                         BigDecimal credit = in.nextBigDecimal();
                         doRequest(path + "/" + id + "?credit=" + credit, true, false, "");
                     }
-                    case "articles/remove", "balance/remove", "operations/remove/id", "operations/remove/article-id", "operations/remove/balance-id" -> {
+                    case "articles/remove", "balance/remove", "operations/remove/id", "operations/remove/article-id", "operations/remove/balance-id" ->
+                    {
                         System.out.println("Id: ");
                         int id = in.nextInt();
                         doRequest(path + "/" + id, true, false, "");
                     }
-                    case "exit" -> {
-                    }
+                    case "exit" -> {}
                     default -> System.out.println("Command not found");
                 }
             }
